@@ -15,6 +15,7 @@ using Common;
 /// </summary>
 public class 游戏
 {
+	public bool GameStart = false;
     public 游戏()
     {
         //
@@ -36,6 +37,7 @@ public class 游戏
     /// 游戏中的玩家队列
     /// </summary>
     public 玩家队列 players = new 玩家队列();
+    public 旁观队列 noplayers = new 旁观队列();
 
     public Stack<游戏状态> states = new Stack<游戏状态>();
 
@@ -62,7 +64,7 @@ public class 游戏
     /// </summary>
     public void ResetGame()
     {
-        //
+        GameStart = false;
     }
 
     /// <summary>
@@ -70,6 +72,7 @@ public class 游戏
     /// </summary>
     public void BeginGame()
     {
+	    GameStart = true;
         states.Clear();
         players.MoveFirst();
         BeginSayStory(players.Current);
@@ -159,7 +162,7 @@ public class 游戏
     /// <param name="isAngree"></param>
     /// <param name="reason"></param>
     /// <returns></returns>
-    public string AgreeStroy(玩家 player, bool isAngree, string reason)
+    public string AgreeStory(玩家 player, bool isAngree, string reason)
     {
         if (states.Peek() is 说故事状态)
         {
@@ -403,6 +406,7 @@ public class 游戏
                     // 大家都不同意                    
                     Chats.Add(string.Format("所有人都认为{0}用【<span  style='color:Red'>{1}</span>】中断不合适", next.名字, cutState.card));
                     next.要素牌.AddRange(卡片.Get要素牌(2));
+                    //cutState.SetState(next, em状态.Agree);
                     return 中断无效处理(cutState, next);
                 }
                 else
@@ -433,6 +437,7 @@ public class 游戏
                         {
                             Chats.Add(string.Format("大部分人同意{0}用【<span  style='color:Red'>{1}</span>】中断不合适", next.名字, cutState.card));
                             next.要素牌.AddRange(卡片.Get要素牌(2));
+							cutState.SetState(next, em状态.Agree);
                             return 中断无效处理(cutState, next);
                         }
                     }
@@ -454,17 +459,12 @@ public class 游戏
     {
 	    //大部分人认为中断无效
         states.Pop();
-        //说故事状态 sayState = states.Peek() as 说故事状态;
-        说故事状态 sayState = states.Pop() as 说故事状态;
-        //next.要素牌.AddRange(卡片.Get要素牌(2) as List<string>); // 中断的玩家受到惩罚
-        //原来说故事的玩家继续说故事
-        玩家 sayPlayer = sayState.List.First;
-        string str = "中断无效，现在有请{0}继续往下说故事";
-	    str = string.Format(str, sayPlayer.名字);
-	    Chats.Add(str);
-        players.Current = sayPlayer;
-        BeginSayStory(players.Current);
-
+        说故事状态 sayState = states.Peek() as 说故事状态;
+        next = sayState.List.Current;
+        sayState.SetState(next, em状态.Agree);
+        next = sayState.List.MoveNext();
+        sayState.SetState(next, em状态.WaitCheckStory);
+		//cutState.SetState(next, em状态.Agree);
         return string.Empty;
     }
 
@@ -480,13 +480,13 @@ public class 游戏
 
         if (isAll)
         {
-            string str = "所有人都同意{0}用【<span  style='color:Red'>{2}</span>”中断合适,现在有请{0}接着】<span  style='color:Red'>{1}</span>”往下说故事";
+            string str = "所有人都同意{0}用【<span  style='color:Red'>{2}</span>】中断合适,现在有请{0}接着“<span  style='color:Red'>{1}</span>”往下说故事";
             str = string.Format(str, next.名字, sayState.story, cutState.card);
             Chats.Add(str);
         }
         else
         {
-            string str = "大部分人同意{0}用【<span  style='color:Red'>{2}</span>”中断合适,现在有请{0}接着】<span  style='color:Red'>{1}</span>”往下说故事";
+            string str = "大部分人同意{0}用【<span  style='color:Red'>{2}</span>】中断合适,现在有请{0}接着“<span  style='color:Red'>{1}</span>”往下说故事";
             str = string.Format(str, next.名字, sayState.story, cutState.card);
             Chats.Add(str);
         }
