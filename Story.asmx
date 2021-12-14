@@ -49,10 +49,10 @@ public class Story  : System.Web.Services.WebService {
     /// <param name="agree"></param>
     /// <param name="reason">反对时要说的理由</param>
     [WebMethod]
-    public string AgreeStroy(int playerSession, bool agree, string reason)
+    public string AgreeStory(int playerSession, bool agree, string reason)
     {
         玩家 player = 游戏.Instance.players[playerSession];
-        return 游戏.Instance.AgreeStroy(player, agree, reason);
+        return 游戏.Instance.AgreeStory(player, agree, reason);
     }
 
     /// <summary>

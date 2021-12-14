@@ -41,7 +41,7 @@ public partial class StoryPage: System.Web.UI.Page
         }
         else
         {
-            ret = game.AgreeStroy(player, !rb_UnAgreeStory.Checked, edt_CutStory.Text);
+            ret = game.AgreeStory(player, !rb_UnAgreeStory.Checked, edt_CutStory.Text);
         }
         if (ret  != string.Empty)
             throw new Exception(ret);
