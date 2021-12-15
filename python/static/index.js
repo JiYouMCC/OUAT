@@ -1,6 +1,10 @@
 // 配置CSRF
 var csrftoken = Cookies.get('csrftoken');
 
+function refreshCSRF() {
+    csrftoken = Cookies.get('csrftoken');
+}
+
 $('[data-toggle="tooltip"]').tooltip();
 
 // 默认输入颜色
@@ -28,6 +32,7 @@ $("#chat").keydown(function(event) {
 });
 
 $("#button_register").click(function() {
+    var username = $("#register_username").val();
     var email = $("#register_email").val();
     var password = $("#register_password").val();
     var password_rp = $("#register_password_rp").val();
@@ -35,6 +40,33 @@ $("#button_register").click(function() {
         alert("两次密码输入不一样");
         return;
     }
+    var nickname = $("#register_nickname").val();
+    $.ajax('/register/',{
+        type: 'POST',
+        headers: {'X-CSRFToken': csrftoken},
+        data: {
+            username: username,
+            password: password,
+            email: email,
+            nickname: nickname
+        },
+        success: function(data, status, xhr) {
+            $("#button_register").button('reset');
+            $("#modal_register").modal('hide');
+            $("#menu_online").hide();
+            $("#menu_update_display_name").text(data.nickname);
+            $("#button_logout").show();
+            $("#change_nickname").val(data.nickname);
+            refreshCSRF()
+        },
+        error: function(jqXhr, textStatus, errorMessage) {
+            
+        }
+    });
+
+
+
+
     findghost.user.register(email, password, function(user) {
         $("#button_register").button('reset');
         if (user) {
@@ -51,6 +83,7 @@ $("#menu_logout").click(function() {
         success: function(data, status, xhr) {
             $("#button_logout").hide();
             $("#menu_online").show();
+            refreshCSRF();
         },
         error: function(jqXhr, textStatus, errorMessage) {
             
@@ -65,9 +98,7 @@ $("#menu_update_display_name").click(function() {
 
 
 $("#menu_register").click(function() {
-    if (!findghost.user.get()) {
-        $("#modal_register").modal('show');
-    }
+    $("#modal_register").modal('show');
 });
 
 
@@ -89,7 +120,9 @@ $("#button_login").click(function() {
             $("#modal_login").modal('hide');
             $("#menu_online").hide();
             $("#menu_update_display_name").text(data.nickname);
-            $("#button_logout").show()
+            $("#button_logout").show();
+            $("#change_nickname").val(data.nickname);
+            refreshCSRF()
         },
         error: function(jqXhr, textStatus, errorMessage) {
             $("#button_login").button('reset');

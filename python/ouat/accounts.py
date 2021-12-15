@@ -27,7 +27,7 @@ def register(request):
         return JsonResponse({'result': False, 'message': 'Already login'})
     username = request.POST.get('username', '')
     password = request.POST.get('password', '')
-    email = request.POST.get('username', '')
+    email = request.POST.get('email', '')
     nickname = request.POST.get('nickname', '')
     try:
         user = User.objects.create_user(username,email,password)
@@ -37,7 +37,7 @@ def register(request):
         auth.login(request, user)
     except Exception as e:
         return JsonResponse({'result': False, 'message': str(e)})
-    return JsonResponse({'result': True})
+    return JsonResponse({'result': True, 'nickname': nickname})
 
 def change_nickname(request):
     if request.user.is_authenticated:
