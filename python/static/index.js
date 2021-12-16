@@ -1,18 +1,4 @@
-// 配置CSRF
-var csrftoken = Cookies.get('csrftoken');
-
-function refreshCSRF() {
-    csrftoken = Cookies.get('csrftoken');
-}
-
-$('[data-toggle="tooltip"]').tooltip();
-
-// 默认输入颜色
-var inputColor = Cookies.get('input_color');
-if (inputColor) {
-    $("#input_color").val(inputColor);
-}
-
+// 【界面相关】
 // 调整窗口大小
 $(window).resize(function() {
     $("#left_pannel").height(window.innerHeight - 94);
@@ -24,11 +10,10 @@ $(window).load(function() {
     $(window).resize();
 });
 
-// 回车代表输入
-$("#chat").keydown(function(event) {
-    if (event.keyCode == 13) {
-        $("#button_chat").click();
-    }
+// 【账号相关】
+// 注册
+$("#menu_register").click(function() {
+    $("#modal_register").modal('show');
 });
 
 $("#button_register").click(function() {
@@ -43,7 +28,7 @@ $("#button_register").click(function() {
     var nickname = $("#register_nickname").val();
     $.ajax('/register/',{
         type: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
+        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
         data: {
             username: username,
             password: password,
@@ -57,7 +42,6 @@ $("#button_register").click(function() {
             $("#menu_update_display_name").text(data.nickname);
             $("#button_logout").show();
             $("#change_nickname").val(data.nickname);
-            refreshCSRF()
         },
         error: function(jqXhr, textStatus, errorMessage) {
             
@@ -76,32 +60,7 @@ $("#button_register").click(function() {
     });
 });
 
-$("#menu_logout").click(function() {
-    $.ajax('/logout/',{
-        type: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
-        success: function(data, status, xhr) {
-            $("#button_logout").hide();
-            $("#menu_online").show();
-            refreshCSRF();
-        },
-        error: function(jqXhr, textStatus, errorMessage) {
-            
-        }
-    });
-});
-
-
-$("#menu_update_display_name").click(function() {
-    $("#modal_update").modal('show');
-});
-
-
-$("#menu_register").click(function() {
-    $("#modal_register").modal('show');
-});
-
-
+// 登录
 $("#menu_login").click(function() {
     $("#modal_login").modal('show');
 });
@@ -110,7 +69,7 @@ $("#button_login").click(function() {
     $("#button_login").button('loading');
     $.ajax('/login/',{
         type: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
+        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
         data: {
             username: $("#login_username").val(),
             password: $("#login_password").val()
@@ -132,11 +91,31 @@ $("#button_login").click(function() {
     );
 });
 
+// 登出
+$("#menu_logout").click(function() {
+    $.ajax('/logout/',{
+        type: 'POST',
+        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+        success: function(data, status, xhr) {
+            $("#button_logout").hide();
+            $("#menu_online").show();
+        },
+        error: function(jqXhr, textStatus, errorMessage) {
+            
+        }
+    });
+});
+
+// 修改昵称
+$("#menu_update_display_name").click(function() {
+    $("#modal_update").modal('show');
+});
+
 $("#button_update_display_name").click(function() {
     $("#button_update").button('loading');
     $.ajax('/change_nickname/',{
         type: 'POST',
-        headers: {'X-CSRFToken': csrftoken},
+        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
         data: {
             nickname: $("#change_nickname").val()
         },
@@ -150,6 +129,26 @@ $("#button_update_display_name").click(function() {
         }
     });
 });
+
+// ------------------------重构分割线-------------------------------
+$('[data-toggle="tooltip"]').tooltip();
+
+// 默认输入颜色
+var inputColor = Cookies.get('input_color');
+if (inputColor) {
+    $("#input_color").val(inputColor);
+}
+
+
+
+// 回车代表输入
+$("#chat").keydown(function(event) {
+    if (event.keyCode == 13) {
+        $("#button_chat").click();
+    }
+});
+
+
 
 $("#button_cancel").click(function() {
     findghost.game.out();
