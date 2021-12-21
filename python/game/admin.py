@@ -1,4 +1,12 @@
 from django.contrib import admin
-from .models import Message
+from .models import Message,Token
 
-admin.site.register(Message)
+
+class Message_admin(admin.ModelAdmin):
+    list_display = ('datetime', 'sender', 'receiver', 'text')
+
+class Token_admin(admin.ModelAdmin):
+    list_display = ('user', 'token')
+
+admin.site.register(Message, Message_admin)
+admin.site.register(Token, Token_admin)

@@ -1,3 +1,5 @@
+var user_token = null;
+
 // 【界面相关】
 // 调整窗口大小
 $(window).resize(function() {
@@ -18,7 +20,6 @@ $("#menu_register").click(function() {
 
 $("#button_register").click(function() {
     var username = $("#register_username").val();
-    var email = $("#register_email").val();
     var password = $("#register_password").val();
     var password_rp = $("#register_password_rp").val();
     if (password != password_rp) {
@@ -32,7 +33,6 @@ $("#button_register").click(function() {
         data: {
             username: username,
             password: password,
-            email: email,
             nickname: nickname
         },
         success: function(data, status, xhr) {
@@ -42,20 +42,10 @@ $("#button_register").click(function() {
             $("#menu_update_display_name").text(data.nickname);
             $("#button_logout").show();
             $("#change_nickname").val(data.nickname);
+            user_token = data.token;
         },
         error: function(jqXhr, textStatus, errorMessage) {
             
-        }
-    });
-
-
-
-
-    findghost.user.register(email, password, function(user) {
-        $("#button_register").button('reset');
-        if (user) {
-            $("#menu_update_display_name").text(findghost.user.displayName.get());
-            $("#modal_register").modal('hide');
         }
     });
 });
@@ -81,7 +71,7 @@ $("#button_login").click(function() {
             $("#menu_update_display_name").text(data.nickname);
             $("#button_logout").show();
             $("#change_nickname").val(data.nickname);
-            refreshCSRF()
+            user_token = data.token;
         },
         error: function(jqXhr, textStatus, errorMessage) {
             $("#button_login").button('reset');
@@ -130,6 +120,51 @@ $("#button_update_display_name").click(function() {
     });
 });
 
+// 回车代表输入
+$("#chat").keydown(function(event) {
+    if (event.keyCode == 13) {
+        $("#button_chat").click();
+    }
+});
+
+// ------------------------编辑分割线-----------------
+
+const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    addMessage(data, "#messages")
+};
+
+chatSocket.onclose = function(e) {
+    console.error('Chat socket closed unexpectedly');
+};
+
+$("#button_chat").click(function() {
+    chatSocket.send(JSON.stringify({
+        'sender': $("#change_nickname").val(),
+        'text': $("#chat").val(),
+        'color': $("#input_color").val(),
+        'token': user_token
+    }));
+    $("#chat").val("");
+    $("#chat").focus();
+});
+
+function formatDate(date) {
+    return ("0" + date.getHours()).slice(-2) + ":" + ("0" + date.getMinutes()).slice(-2) + ":" + ("0" + date.getSeconds()).slice(-2) + " ";
+}
+
+function addMessage(messageInfo, elementId) {
+    var date = messageInfo.datetime;
+    var message = messageInfo.text;
+    //var messageType = messageInfo.type;
+    var dateTime = new Date(parseInt(date));
+    var userDisplay = messageInfo.sender;
+    var color = messageInfo.color;
+    $(elementId).append($("<div></div>").append($("<span></span>").text(formatDate(dateTime) + " ")).append($("<span></span>").attr("style", "color:" + color).text(userDisplay + "：")).append($("<span></span>").attr("style", "color:" + color).text(message)));
+}
+
 // ------------------------重构分割线-------------------------------
 $('[data-toggle="tooltip"]').tooltip();
 
@@ -138,17 +173,6 @@ var inputColor = Cookies.get('input_color');
 if (inputColor) {
     $("#input_color").val(inputColor);
 }
-
-
-
-// 回车代表输入
-$("#chat").keydown(function(event) {
-    if (event.keyCode == 13) {
-        $("#button_chat").click();
-    }
-});
-
-
 
 $("#button_cancel").click(function() {
     findghost.game.out();

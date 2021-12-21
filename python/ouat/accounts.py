@@ -1,43 +1,60 @@
 from django.contrib import auth
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-
+from django.shortcuts import render
+from game.token import create_token,clear_token
 
 def login(request):
-    if request.user.is_authenticated:
-        return JsonResponse({'result': True, 'nickname': request.user.last_name})
     username = request.POST.get('username', '')
     password = request.POST.get('password', '')
-    user = auth.authenticate(username=username, password=password)
-    if user is not None and user.is_active:
-        auth.login(request, user)
-        return JsonResponse({'result': True, 'nickname':user.last_name})
+    if request.user.is_authenticated:
+        return JsonResponse({
+            'result': True, 
+            'nickname': request.user.last_name,
+            'token': create_token(request.user)
+        })
     else:
-        return JsonResponse({'result': False,'user':user})
+        user = auth.authenticate(username=username, password=password)
+        if user is not None and user.is_active:
+            auth.login(request, user)
+            return JsonResponse({
+                'result': True,
+                'nickname': user.last_name,
+                'token': create_token(request.user)
+            })
+        else:
+            return JsonResponse({
+                'result': False
+            })
 
 
 def logout(request):
     if request.user.is_authenticated:
+        clear_token(request.user)
         auth.logout(request)
     return JsonResponse({'result': True})
 
 
 def register(request):
-    if request.user.is_authenticated:
-        return JsonResponse({'result': False, 'message': 'Already login'})
     username = request.POST.get('username', '')
     password = request.POST.get('password', '')
-    email = request.POST.get('email', '')
     nickname = request.POST.get('nickname', '')
+
+    if request.user.is_authenticated:
+        return JsonResponse({'result': False, 'message': 'Already login'})
     try:
-        user = User.objects.create_user(username,email,password)
+        user = User.objects.create_user(username=username, password=password)
         user = auth.authenticate(username=username, password=password)
         user.last_name = nickname
         user.save()
         auth.login(request, user)
     except Exception as e:
         return JsonResponse({'result': False, 'message': str(e)})
-    return JsonResponse({'result': True, 'nickname': nickname})
+    return JsonResponse({
+        'result': True, 
+        'nickname': nickname, 
+        'token': create_token(user)})
+
 
 def change_nickname(request):
     if request.user.is_authenticated:

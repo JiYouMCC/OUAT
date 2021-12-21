@@ -1,7 +1,17 @@
 import os
 
+from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
+import game.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ouat.settings')
-
-application = get_asgi_application()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ouat.settings")
+LANGUAGE_SESSION_KEY = '_language'
+application = ProtocolTypeRouter({
+  "http": get_asgi_application(),
+  "websocket": AuthMiddlewareStack(
+        URLRouter(
+            game.routing.websocket_urlpatterns
+        )
+    ),
+})
