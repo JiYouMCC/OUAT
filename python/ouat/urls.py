@@ -9,4 +9,5 @@ urlpatterns = [
     path('register/', accounts.register),
     path('logout/', accounts.logout),
     path('change_nickname/', accounts.change_nickname),
+    path('get_status/', accounts.get_status),
 ]

@@ -1,5 +1,82 @@
 var user_token = null;
 
+var MESSAGES = {
+    TYPE: {
+        SYSTEM: 0,
+        CHAT: 1,
+        GAME: 2,
+        PLAYER: 3,
+    },
+    SYSTEM_MESSAGE: {
+        LEAVE: 0,
+        RENAME: 1,
+        REGISTER: 2,
+        LOGIN: 3
+    },
+    SYSTEM_MESSAGE_TXT: [
+        "“{0}”离开了。",
+        "“{0}”改名为“{1}”。",
+        "“{0}”加入了游戏。",
+        "“{0}”回来了。"
+    ],
+    GAME_MESSAGE: {
+        START: 0,
+        END: 1,
+        MAN_WORD: 2,
+        GHOST_WORD: 3,
+        MEN: 4,
+        GHOST: 5,
+        READY_PLAY: 6,
+        READY_WHITE: 7,
+        READY_OWNER: 8,
+        GUESS_WORD: 9,
+        GUESS_FAIL: 10,
+        EXPOSE: 11,
+        CONTINUE: 12,
+        VOTE: 13,
+        VOTE_RESULT: 14,
+        VOTE_CONTINUE: 15,
+        OWNER_GIVE_UP: 16,
+        PLAYER_GIVE_UP: 17,
+        WHITE_GIVE_UP: 18,
+        OWNER_LEAVE: 19,
+        PLAYER_RUN: 20,
+        PLAYER_LEAVE: 21,
+        WHITE_RUN: 22,
+        WHITE_LEAVE: 23,
+        VOTE_EARLY_KILL: 24
+    },
+    GAME_MESSAGE_TXT: [
+        "游戏开始了，请大家确认自己发到的词！现在场上出现了{0}个鬼，它们和{1}个人混在一起，但是谁都不知道自己是人还是鬼，大家加油把它们抓出来吧！",
+        "游戏结束, {0}赢了！",
+        "人词：{0}",
+        "鬼词：{0}",
+        "人：{0}",
+        "鬼：{0}",
+        "“{0}”要抓鬼！",
+        "“{0}”要当小白！",
+        "“{0}”已经提交了词，要当法官。",
+        "小白“{0}”猜人词是“{1}”。",
+        "天雷滚滚，一道闪电把小白“{0}”劈死了……",
+        "“{0}”发出了一声嚎叫，筋脉尽断，自爆而亡！",
+        "游戏继续进行。",
+        "“{0}”指认“{1}”是鬼！",
+        "“{0}”就这么被投死了，那么问题来了，Ta到底是不是鬼呢？",
+        "大家争吵很激烈，不能确定谁是鬼，本次投票作废。",
+        "“{0}”不当法官了。",
+        "“{0}”不玩了。",
+        "“{0}”不当小白了。",
+        "法官“{0}”很无聊，走了。",
+        "玩家“{0}”逃跑了，Ta在逃跑的路上被活活呸死~~",
+        "玩家“{0}”拖着自己的尸体走了……",
+        "小白“{0}”放弃了……",
+        "小白“{0}”拖着自己的尸体走了……",
+        "“{0}”已经被超过半数的人指认为鬼了，本着人/鬼道主义减轻Ta的痛苦，提前让Ta上路了……",
+    ]
+}
+
+const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+
 // 【界面相关】
 // 调整窗口大小
 $(window).resize(function() {
@@ -13,6 +90,36 @@ $(window).load(function() {
 });
 
 // 【账号相关】
+
+
+$.ajax('/get_status/', {
+    type: 'POST',
+    headers: {
+        'X-CSRFToken': Cookies.get('csrftoken')
+    },
+    success: function(data, status, xhr) {
+        if (data.result) {
+            $("#button_login").button('reset');
+            $("#modal_login").modal('hide');
+            $("#menu_online").hide();
+            $("#menu_update_display_name").text(data.nickname);
+            $("#button_logout").show();
+            $("#change_nickname").val(data.nickname);
+            user_token = data.token;
+            chatSocket.send(JSON.stringify({
+                'sender': $("#change_nickname").val(),
+                'text': 'login',
+                'type': 'system',
+                'token': user_token
+            }));
+        }
+    },
+    error: function(jqXhr, textStatus, errorMessage) {
+        $("#button_login").button('reset');
+        console.log(errorMessage);
+    }
+});
+
 // 注册
 $("#menu_register").click(function() {
     $("#modal_register").modal('show');
@@ -27,25 +134,31 @@ $("#button_register").click(function() {
         return;
     }
     var nickname = $("#register_nickname").val();
-    $.ajax('/register/',{
+    $.ajax('/register/', {
         type: 'POST',
-        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+        headers: {
+            'X-CSRFToken': Cookies.get('csrftoken')
+        },
         data: {
             username: username,
             password: password,
             nickname: nickname
         },
         success: function(data, status, xhr) {
-            $("#button_register").button('reset');
-            $("#modal_register").modal('hide');
-            $("#menu_online").hide();
-            $("#menu_update_display_name").text(data.nickname);
-            $("#button_logout").show();
-            $("#change_nickname").val(data.nickname);
-            user_token = data.token;
+            if (data.result) {
+                $("#button_register").button('reset');
+                $("#modal_register").modal('hide');
+                $("#menu_online").hide();
+                $("#menu_update_display_name").text(data.nickname);
+                $("#button_logout").show();
+                $("#change_nickname").val(data.nickname);
+                user_token = data.token;
+            } else {
+                alert("注册失败！");
+            }
         },
         error: function(jqXhr, textStatus, errorMessage) {
-            
+
         }
     });
 });
@@ -57,41 +170,62 @@ $("#menu_login").click(function() {
 
 $("#button_login").click(function() {
     $("#button_login").button('loading');
-    $.ajax('/login/',{
+    $.ajax('/login/', {
         type: 'POST',
-        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+        headers: {
+            'X-CSRFToken': Cookies.get('csrftoken')
+        },
         data: {
             username: $("#login_username").val(),
             password: $("#login_password").val()
         },
         success: function(data, status, xhr) {
-            $("#button_login").button('reset');
-            $("#modal_login").modal('hide');
-            $("#menu_online").hide();
-            $("#menu_update_display_name").text(data.nickname);
-            $("#button_logout").show();
-            $("#change_nickname").val(data.nickname);
-            user_token = data.token;
+            if (data.result) {
+                $("#button_login").button('reset');
+                $("#modal_login").modal('hide');
+                $("#menu_online").hide();
+                $("#menu_update_display_name").text(data.nickname);
+                $("#button_logout").show();
+                $("#change_nickname").val(data.nickname);
+                user_token = data.token;
+                chatSocket.send(JSON.stringify({
+                    'sender': $("#change_nickname").val(),
+                    'text': 'login',
+                    'type': 'system',
+                    'token': user_token
+                }));
+            } else {
+                alert("登录失败！");
+            }
         },
         error: function(jqXhr, textStatus, errorMessage) {
             $("#button_login").button('reset');
             console.log(errorMessage);
         }
-    }
-    );
+    });
 });
 
 // 登出
 $("#menu_logout").click(function() {
-    $.ajax('/logout/',{
+    $.ajax('/logout/', {
         type: 'POST',
-        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+        headers: {
+            'X-CSRFToken': Cookies.get('csrftoken')
+        },
         success: function(data, status, xhr) {
-            $("#button_logout").hide();
-            $("#menu_online").show();
+            if (data.result) {
+                $("#button_logout").hide();
+                $("#menu_online").show();
+                chatSocket.send(JSON.stringify({
+                    'sender': $("#change_nickname").val(),
+                    'text': 'logout',
+                    'type': 'system',
+                    'token': user_token
+                }));
+            }
         },
         error: function(jqXhr, textStatus, errorMessage) {
-            
+
         }
     });
 });
@@ -103,9 +237,11 @@ $("#menu_update_display_name").click(function() {
 
 $("#button_update_display_name").click(function() {
     $("#button_update").button('loading');
-    $.ajax('/change_nickname/',{
+    $.ajax('/change_nickname/', {
         type: 'POST',
-        headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+        headers: {
+            'X-CSRFToken': Cookies.get('csrftoken')
+        },
         data: {
             nickname: $("#change_nickname").val()
         },
@@ -129,7 +265,7 @@ $("#chat").keydown(function(event) {
 
 // ------------------------编辑分割线-----------------
 
-const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+
 
 chatSocket.onmessage = function(e) {
     const data = JSON.parse(e.data);
@@ -158,12 +294,29 @@ function formatDate(date) {
 function addMessage(messageInfo, elementId) {
     var date = messageInfo.datetime;
     var message = messageInfo.text;
-    //var messageType = messageInfo.type;
     var dateTime = new Date(parseInt(date));
     var userDisplay = messageInfo.sender;
     var color = messageInfo.color;
-    $(elementId).append($("<div></div>").append($("<span></span>").text(formatDate(dateTime) + " ")).append($("<span></span>").attr("style", "color:" + color).text(userDisplay + "：")).append($("<span></span>").attr("style", "color:" + color).text(message)));
+    var messageType = messageInfo.type;
+    var commandText = ''
+    if (messageType == "system") {
+        if (message == "login") {
+            commandText = userDisplay + "加入了游戏。"
+        } else {
+            commandText = userDisplay + "离开了。"
+        }
+        $(elementId).append(
+            $("<div></div>").addClass("text-danger").append(
+                $("<span></span>").text("【系统消息】").append(
+                    $("<span></span>").text(commandText)
+                )
+            )
+        );
+    } else {
+        $(elementId).append($("<div></div>").append($("<span></span>").text(formatDate(dateTime) + " ")).append($("<span></span>").attr("style", "color:" + color).text(userDisplay + "：")).append($("<span></span>").attr("style", "color:" + color).text(message)));
+    }
 }
+
 
 // ------------------------重构分割线-------------------------------
 $('[data-toggle="tooltip"]').tooltip();

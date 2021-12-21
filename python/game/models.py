@@ -2,7 +2,12 @@ from django.db import models
 from django.conf import settings
 from django.utils.timezone import now
 
+
 class Message(models.Model):
+    class MessageTypes(models.TextChoices):
+        SYSTEM = 'SYS'
+        CHAT = 'CHA'
+
     text = models.TextField(
         max_length=1024,
         verbose_name="内容",
@@ -36,8 +41,15 @@ class Message(models.Model):
         blank=True,
         null=True
     )
+    message_type = models.CharField(
+        max_length=3,
+        choices=MessageTypes.choices,
+        default=MessageTypes.CHAT
+    )
+
 
 class Token(models.Model):
+    # 其实可以用djangorestframework里面的token，但是偷懒了，就没有用
     token = models.CharField(
         max_length=32,
         verbose_name="token",

@@ -3,7 +3,7 @@ from .models import Message,Token
 
 
 class Message_admin(admin.ModelAdmin):
-    list_display = ('datetime', 'sender', 'receiver', 'text')
+    list_display = ('datetime', 'sender', 'receiver', 'text', 'message_type')
 
 class Token_admin(admin.ModelAdmin):
     list_display = ('user', 'token')

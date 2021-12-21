@@ -4,9 +4,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import render
 from game.token import create_token,clear_token
 
-def login(request):
-    username = request.POST.get('username', '')
-    password = request.POST.get('password', '')
+def get_status(request):
     if request.user.is_authenticated:
         return JsonResponse({
             'result': True, 
@@ -14,34 +12,43 @@ def login(request):
             'token': create_token(request.user)
         })
     else:
-        user = auth.authenticate(username=username, password=password)
-        if user is not None and user.is_active:
-            auth.login(request, user)
-            return JsonResponse({
-                'result': True,
-                'nickname': user.last_name,
-                'token': create_token(request.user)
-            })
-        else:
-            return JsonResponse({
-                'result': False
-            })
+        return JsonResponse({
+            'result': False
+        })
+
+def login(request):
+    if request.user.is_authenticated:
+        clear_token(request.user)
+        auth.logout(request)
+    username = request.POST.get('username', '')
+    password = request.POST.get('password', '')
+    user = auth.authenticate(username=username, password=password)
+    if user is not None and user.is_active:
+        auth.login(request, user)
+        return JsonResponse({
+            'result': True,
+            'nickname': user.last_name,
+            'token': create_token(request.user)
+        })
+    else:
+        return JsonResponse({
+            'result': False
+        })
 
 
 def logout(request):
     if request.user.is_authenticated:
-        clear_token(request.user)
         auth.logout(request)
     return JsonResponse({'result': True})
 
 
 def register(request):
+    if request.user.is_authenticated:
+        clear_token(request.user)
+        auth.logout(request)
     username = request.POST.get('username', '')
     password = request.POST.get('password', '')
     nickname = request.POST.get('nickname', '')
-
-    if request.user.is_authenticated:
-        return JsonResponse({'result': False, 'message': 'Already login'})
     try:
         user = User.objects.create_user(username=username, password=password)
         user = auth.authenticate(username=username, password=password)
