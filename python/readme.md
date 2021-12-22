@@ -27,11 +27,13 @@ pip install channels==3.0.4
 
 https://www.django-rest-framework.org/api-guide/authentication/
 
-pip install djangorestframework
+这个不用装，我用傻办法搞了：pip install djangorestframework
 
-winpty python manage.py createsuperuser
+生成超级用户 winpty python manage.py createsuperuser
 
 
 pip install channels-redis==2.4.2
+
+在win下面装redis
 
 https://github.com/MicrosoftArchive/redis/releases

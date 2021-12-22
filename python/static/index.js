@@ -92,7 +92,7 @@ $(window).load(function() {
 // 【账号相关】
 
 
-$.ajax('/get_status/', {
+$.ajax('/account/get_status/', {
     type: 'POST',
     headers: {
         'X-CSRFToken': Cookies.get('csrftoken')
@@ -134,7 +134,7 @@ $("#button_register").click(function() {
         return;
     }
     var nickname = $("#register_nickname").val();
-    $.ajax('/register/', {
+    $.ajax('/account/register/', {
         type: 'POST',
         headers: {
             'X-CSRFToken': Cookies.get('csrftoken')
@@ -170,7 +170,7 @@ $("#menu_login").click(function() {
 
 $("#button_login").click(function() {
     $("#button_login").button('loading');
-    $.ajax('/login/', {
+    $.ajax('/account/login/', {
         type: 'POST',
         headers: {
             'X-CSRFToken': Cookies.get('csrftoken')
@@ -207,7 +207,7 @@ $("#button_login").click(function() {
 
 // 登出
 $("#menu_logout").click(function() {
-    $.ajax('/logout/', {
+    $.ajax('/account/logout/', {
         type: 'POST',
         headers: {
             'X-CSRFToken': Cookies.get('csrftoken')
@@ -220,7 +220,7 @@ $("#menu_logout").click(function() {
                     'sender': $("#change_nickname").val(),
                     'text': 'logout',
                     'type': 'system',
-                    'token': user_token
+                    'uid': data.uid
                 }));
             }
         },
@@ -237,7 +237,7 @@ $("#menu_update_display_name").click(function() {
 
 $("#button_update_display_name").click(function() {
     $("#button_update").button('loading');
-    $.ajax('/change_nickname/', {
+    $.ajax('/account/change_nickname/', {
         type: 'POST',
         headers: {
             'X-CSRFToken': Cookies.get('csrftoken')
