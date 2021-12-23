@@ -34,6 +34,27 @@ function updateStatus() {
 }
 updateStatus();
 
+//检测在线
+setInterval(function() {
+    ouat.hall.users.get(function(data) {
+        $("#user_list").text("");
+        var users = data.users;
+        var count = 0;
+        for (index in users) {
+            user = users[index];
+            var displayName = user.nickname;
+            //var date = users[uid].date;
+            var li = $("<li></li>").addClass("list-group-item").text(displayName);
+            /*if (date + findghost.userSleepTime < currentDate) {
+                li.addClass('list-group-item-warning');
+            }*/
+            $("#user_list").append(li);
+            count += 1;
+        }
+        $("#online_count").text(count);
+    })
+}, 1000);
+
 // 注册
 $("#menu_register").click(function() {
     $("#modal_register").modal('show');
@@ -63,6 +84,7 @@ $("#button_register").click(function() {
                 'type': 'system',
                 'token': account.userToken.get()
             }));
+            ouat.hall.users.add();
         } else {
             alert("注册失败！");
             $("#button_register").button('reset');
@@ -94,6 +116,7 @@ $("#button_login").click(function() {
                     'type': 'system',
                     'token': account.userToken.get()
                 }));
+                ouat.hall.users.add();
             } else {
                 alert("登录失败！");
                 $("#button_login").button('reset');
@@ -108,6 +131,10 @@ $("#menu_logout").click(function() {
         if (data && data.result) {
             $("#button_logout").hide();
             $("#menu_online").show();
+            ouat.hall.users.remove(data.uid,function(data){
+                console.log(data)
+
+            });
             chatSocket.send(JSON.stringify({
                 'sender': $("#change_nickname").val(),
                 'text': 'logout',
@@ -125,8 +152,8 @@ $("#menu_update_display_name").click(function() {
 
 $("#button_update_display_name").click(function() {
     $("#button_update").button('loading');
-    account.user.nickname.set($("#change_nickname").val(), function(data){
-        if(data && data.result) {
+    account.user.nickname.set($("#change_nickname").val(), function(data) {
+        if (data && data.result) {
             $("#button_update").button('reset');
             $("#menu_update_display_name").text(data.nickname);
             $('#modal_update').modal('hide');

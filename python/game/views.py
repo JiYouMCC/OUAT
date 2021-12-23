@@ -43,3 +43,56 @@ def add_user(request):
             'result': True,
             'users': result
         })
+    else:
+        return JsonResponse({
+            'result': False
+        })
+
+def remove_user(request):
+    uid = None
+    if request.user.is_authenticated:
+        uid = request.user.id
+    else:
+        uid = request.POST.get('uid', '')
+    if uid:
+        result = Cache.get('hall_user_list')
+        result = [user for user in result if str(user['uid']) != str(uid)]
+        Cache.set('hall_user_list', result)
+        return JsonResponse({
+            'result': True,
+            'users': result
+        })
+    else:
+        return JsonResponse({
+            'result': False
+        })
+
+def get_players(request):
+    result = Cache.get('hall_players_list')
+    return JsonResponse({
+        'result': True,
+        'users': result if result else []
+    })
+
+def add_player(request):
+    if request.user.is_authenticated:
+        result = Cache.get('hall_player_list')
+        result = [user for user in result if user['uid'] != request.user.id]
+        if result:
+            result.append(
+                {
+                    'username': request.user.username,
+                    'uid': request.user.id,
+                    'nickname': request.user.last_name,
+                })
+        else:
+            result = [{
+                'username': request.user.username,
+                'uid': request.user.id,
+                'nickname': request.user.last_name,
+            }]
+        Cache.set('hall_user_list', result)
+        return JsonResponse({
+            'result': True,
+            'users': result
+        })

@@ -12,9 +12,13 @@ var ouat = {
                     },
                     success: function(data, status, xhr) {
                         if (data.result) {
-                            callback(data);
+                            if (callback) {
+                                callback(data);
+                            }
                         } else {
-                            callback(undefined);
+                            if (callback) {
+                                callback(undefined);
+                            }
                         }
                     },
                     error: function(jqXhr, textStatus, errorMessage) {
@@ -23,11 +27,58 @@ var ouat = {
                     }
                 });
             },
-            remove: function() {
-
+            remove: function(uid, callback) {
+                $.ajax('/hall/remove_user/', {
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': Cookies.get('csrftoken')
+                    },
+                    data: {
+                        uid: uid
+                    },
+                    success: function(data, status, xhr) {
+                        if (data.result) {
+                            if (callback) {
+                                callback(data);
+                            }
+                        } else {
+                            if (callback) {
+                                callback(undefined);
+                            }
+                        }
+                    },
+                    error: function(jqXhr, textStatus, errorMessage) {
+                        ouat.handleError(errorMessage)
+                        if (callback) {
+                            callback(undefined);
+                        }
+                    }
+                });
             },
-            get: function() {
-
+            get: function(callback) {
+                $.ajax('/hall/users/', {
+                    type: 'POST',
+                    headers: {
+                        'X-CSRFToken': Cookies.get('csrftoken')
+                    },
+                    success: function(data, status, xhr) {
+                        if (data.result) {
+                            if (callback) {
+                                callback(data);
+                            }
+                        } else {
+                            if (callback) {
+                                callback(undefined);
+                            }
+                        }
+                    },
+                    error: function(jqXhr, textStatus, errorMessage) {
+                        ouat.handleError(errorMessage)
+                        if (callback) {
+                            callback(undefined);
+                        }
+                    }
+                });
             }
         },
         message: {
