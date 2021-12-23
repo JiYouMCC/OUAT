@@ -5,7 +5,6 @@ from django.http import JsonResponse
 from django.shortcuts import render
 import uuid
 
-
 def create_token(user):
     clear_token(user)
     token = Token(user=user, token=uuid.uuid4().hex)

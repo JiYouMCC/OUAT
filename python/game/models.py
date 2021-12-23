@@ -1,6 +1,33 @@
 from django.db import models
 from django.conf import settings
 from django.utils.timezone import now
+import json
+
+
+class Cache(models.Model):
+    cache_key = models.CharField(
+        max_length=1024,
+        verbose_name="key",
+        primary_key=True
+    )
+
+    cache_value = models.TextField(
+        verbose_name="value",
+        blank=True,
+        null=False
+    )
+
+    def get(cache_key):
+        cache_objects = Cache.objects.filter(cache_key=cache_key)
+        if cache_objects:
+            return json.loads(cache_objects[0].cache_value)
+        else:
+            return None
+
+    def set(cache_key, cache_value):
+        Cache.objects.filter(cache_key=cache_key).delete()
+        cache = Cache(cache_key=cache_key, cache_value=json.dumps(cache_value))
+        cache.save()
 
 
 class Message(models.Model):
@@ -45,23 +72,6 @@ class Message(models.Model):
         max_length=3,
         choices=MessageTypes.choices,
         default=MessageTypes.CHAT
-    )
-
-
-class Token(models.Model):
-    # 其实可以用djangorestframework里面的token，但是偷懒了，就没有用
-    token = models.CharField(
-        max_length=32,
-        verbose_name="token",
-        unique=True,
-        blank=False,
-        null=False
-    )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='user',
-        null=False
     )
 
 # class ElementCard(models.Model):
