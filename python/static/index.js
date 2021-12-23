@@ -21,10 +21,7 @@ function updateStatus() {
       $("#menu_update_display_name").text(data.nickname);
       $("#button_logout").show();
       $("#change_nickname").val(data.nickname);
-      ouat.hall.message.sendSystem(
-        account.user.uid.get(),
-        'online',
-        null
+      ouat.hall.message.sendSystem(account.user.uid.get(),'online',null
       )
     }
   });
@@ -63,11 +60,7 @@ $("#button_register").click(function() {
       $("#menu_update_display_name").text(data.nickname);
       $("#button_logout").show();
       $("#change_nickname").val(data.nickname);
-      ouat.hall.message.sendSystem(
-        account.user.uid.get(),
-        'online',
-        null
-      );
+      ouat.hall.message.sendSystem(account.user.uid.get(),'online',null);
     } else {
       alert("注册失败！");
       $("#button_register").button('reset');
@@ -93,10 +86,7 @@ $("#button_login").click(function() {
         $("#menu_update_display_name").text(data.nickname);
         $("#button_logout").show();
         $("#change_nickname").val(data.nickname);
-        ouat.hall.message.sendSystem(
-          account.user.uid.get(),
-          'online',
-          null
+        ouat.hall.message.sendSystem(account.user.uid.get(),'online',null
         );
       } else {
         alert("登录失败！");
@@ -113,11 +103,7 @@ $("#menu_logout").click(function() {
       console.log(data)
       $("#button_logout").hide();
       $("#menu_online").show();
-      ouat.hall.message.sendSystem(
-        data.uid,
-        'offline',
-        null
-      );
+      ouat.hall.message.sendSystem(data.uid,'offline',null);
     }
   });
 });
@@ -154,10 +140,10 @@ ouat.init(
   function(messagedata) {
     messagedata = JSON.parse(messagedata.data);
     console.log(messagedata)
-    if (messagedata.type == "system" && messagedata.text == "init") {
+    if (messagedata.type == "system" && messagedata.text == "user_list") {
       updateUserList(messagedata.users);
     }
-    if (messagedata.text != "init") {
+    if (messagedata.text != "user_list") {
       addMessage(messagedata, "#messages")
     }
   },

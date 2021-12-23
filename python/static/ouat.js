@@ -1,7 +1,6 @@
 //依赖项: jquery, cookie,account
 var ouat = {
-    init: function(messageSocketOnMessage,
-        messageSocketOnClose) {
+    init: function(messageSocketOnMessage,messageSocketOnClose) {
         ouat.hall.message._messageSocket.onmessage = messageSocketOnMessage;
         ouat.hall.message._messageSocket.onclose = messageSocketOnClose;
     },
@@ -9,84 +8,6 @@ var ouat = {
         console.log(error);
     },
     hall: {
-        users: {
-            add: function(callback) {
-                $.ajax('/hall/add_user/', {
-                    type: 'POST',
-                    headers: {
-                        'X-CSRFToken': Cookies.get('csrftoken')
-                    },
-                    success: function(data, status, xhr) {
-                        if (data.result) {
-                            if (callback) {
-                                callback(data);
-                            }
-                        } else {
-                            if (callback) {
-                                callback(undefined);
-                            }
-                        }
-                    },
-                    error: function(jqXhr, textStatus, errorMessage) {
-                        ouat.handleError(errorMessage)
-                        callback(undefined);
-                    }
-                });
-            },
-            remove: function(uid, callback) {
-                $.ajax('/hall/remove_user/', {
-                    type: 'POST',
-                    headers: {
-                        'X-CSRFToken': Cookies.get('csrftoken')
-                    },
-                    data: {
-                        uid: uid
-                    },
-                    success: function(data, status, xhr) {
-                        if (data.result) {
-                            if (callback) {
-                                callback(data);
-                            }
-                        } else {
-                            if (callback) {
-                                callback(undefined);
-                            }
-                        }
-                    },
-                    error: function(jqXhr, textStatus, errorMessage) {
-                        ouat.handleError(errorMessage)
-                        if (callback) {
-                            callback(undefined);
-                        }
-                    }
-                });
-            },
-            get: function(callback) {
-                $.ajax('/hall/users/', {
-                    type: 'POST',
-                    headers: {
-                        'X-CSRFToken': Cookies.get('csrftoken')
-                    },
-                    success: function(data, status, xhr) {
-                        if (data.result) {
-                            if (callback) {
-                                callback(data);
-                            }
-                        } else {
-                            if (callback) {
-                                callback(undefined);
-                            }
-                        }
-                    },
-                    error: function(jqXhr, textStatus, errorMessage) {
-                        ouat.handleError(errorMessage)
-                        if (callback) {
-                            callback(undefined);
-                        }
-                    }
-                });
-            }
-        },
         message: {
             _messageSocket: new WebSocket('ws://' + window.location.host + '/ws/chat/'),
             sendChat: function(from, to, message, color, callback) {
@@ -116,6 +37,10 @@ var ouat = {
         }
     },
     game: {
-
+        players: {
+            add:function(){},
+            remove:function(){},
+            get:function(){}
+        },
     }
 }

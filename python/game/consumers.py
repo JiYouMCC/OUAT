@@ -9,15 +9,24 @@ import logging
 
 
 class SystemMessageText:
-    INIT = 'init'
-    ONLINE = 'online'
-    OFFLINE = 'offline'
+    INIT = 'user_list' # 隐藏
+    ONLINE = 'online' # 用户活跃
+    OFFLINE = 'offline' # 用户不活跃
 
 
 class MessageType:
-    SYSTEM = 'system'
-    CHAT = 'chat'
+    SYSTEM = 'system' #系统消息
+    CHAT = 'chat' #聊天消息
+    GAME = 'game' #游戏消息
 
+class GameMessageCommand:
+    ATTEND = 'attend' # 加入游戏
+    CANCEL = 'cancel' # 取消加入
+    QUIT = 'quit' # 游戏中退出
+    BREAK = 'break' # 中断
+    TELL = 'tell' #讲述
+    SUMMARIZE = 'summa' # 结束三段论
+    FINAL = 'final' # 讲述结局
 
 def get_online_message(user, datetime):
     return {
