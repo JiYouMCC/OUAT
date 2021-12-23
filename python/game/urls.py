@@ -1,10 +1,8 @@
 from django.urls import path
 
 from . import views
+from . import hall
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('hall/users/', views.get_users),
-    path('hall/add_user/', views.add_user),
-    path('hall/remove_user/', views.remove_user)
+    path('', views.index, name='index')
 ]

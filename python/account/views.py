@@ -1,27 +1,9 @@
-from .models import Token
 from django.contrib import auth
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import render
 import uuid
 
-def create_token(user):
-    clear_token(user)
-    token = Token(user=user, token=uuid.uuid4().hex)
-    token.save()
-    return token.token
-
-
-def clear_token(user):
-    Token.objects.filter(user=user).delete()
-
-
-def get_user_by_token(token):
-    token = Token.objects.filter(token=token)[0]
-    if token:
-        return token.user
-    else:
-        return None
 
 def get_user_by_id(uid):
     user = User.objects.filter(id=uid)[0]
@@ -35,8 +17,8 @@ def get_status(request):
     if request.user.is_authenticated:
         return JsonResponse({
             'result': True,
-            'nickname': request.user.last_name,
-            'token': create_token(request.user)
+            'uid': request.user.id,
+            'nickname': request.user.last_name
         })
     else:
         return JsonResponse({
@@ -54,8 +36,8 @@ def login(request):
         auth.login(request, user)
         return JsonResponse({
             'result': True,
-            'nickname': user.last_name,
-            'token': create_token(request.user)
+            'uid': user.id,
+            'nickname': user.last_name
         })
     else:
         return JsonResponse({
@@ -66,11 +48,11 @@ def login(request):
 def logout(request):
     if request.user.is_authenticated:
         user = request.user
-        clear_token(user)
         auth.logout(request)
         return JsonResponse({
             'result': True,
-            'uid': user.id
+            'uid': user.id,
+            'nickname': user.last_name
         })
     else:
         return JsonResponse({
@@ -94,8 +76,8 @@ def register(request):
         return JsonResponse({'result': False, 'message': str(e)})
     return JsonResponse({
         'result': True,
-        'nickname': nickname,
-        'token': create_token(user)})
+        'uid': user.id,
+        'nickname': nickname})
 
 
 def change_nickname(request):
@@ -104,6 +86,10 @@ def change_nickname(request):
         user = request.user
         user.last_name = nickname
         user.save()
-        return JsonResponse({'result': True, 'nickname': nickname})
+        return JsonResponse({
+            'result': True,
+            'uid': user.id,
+            'nickname': nickname
+        })
     else:
         return JsonResponse({'result': False})
