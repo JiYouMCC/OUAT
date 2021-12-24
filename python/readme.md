@@ -87,3 +87,32 @@ Mark一下，目前用自己写的Cache module平替，就是比较傻
 5. ```python manage.py runserver```
 6. http://127.0.0.1:8000 可以搞了
 
+### 消息
+
+#### 大类
+
+| 描述 | 数据库层 | ui层 | socket回传消息 |
+| -- | -- | -- | -- |
+| 聊天信息     | message_type: CHAT = 'chat' | 啥都不写 |'type': MessageType.CHAT = 'chat' |
+| 系统信息     | message_type: SYSTEM = 'system' | 'type':'system' |'type': MessageType.SYSTEM = 'system' |
+| 游戏信息     | message_type: SYSTEM = 'game' | 'type':'game' |'type': MessageType.GAME = 'game' |
+
+#### 系统信息
+
+- online
+- offline
+- user_list
+
+#### 游戏信息
+
+- attend
+- cancel
+- start
+- quit
+- tell
+- break
+- objection
+- summary
+- final
+- vote
+

@@ -4,62 +4,96 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.utils import timezone
 import json
-from .hall import add_user, remove_user, get_users
+from .hall import add_user, remove_user, get_users, get_players, get_owner, add_player
 import logging
 
 
 class SystemMessageText:
-    INIT = 'user_list' # 隐藏
-    ONLINE = 'online' # 用户活跃
-    OFFLINE = 'offline' # 用户不活跃
+    USER_LIST = 'user_list'  # 隐藏
+    ONLINE = 'online'  # 用户活跃
+    OFFLINE = 'offline'  # 用户不活跃
 
 
 class MessageType:
-    SYSTEM = 'system' #系统消息
-    CHAT = 'chat' #聊天消息
-    GAME = 'game' #游戏消息
+    SYSTEM = 'system'  # 系统消息
+    CHAT = 'chat'  # 聊天消息
+    GAME = 'game'  # 游戏消息
+
 
 class GameMessageCommand:
-    ATTEND = 'attend' # 加入游戏
-    CANCEL = 'cancel' # 取消加入
-    QUIT = 'quit' # 游戏中退出
-    BREAK = 'break' # 中断
-    TELL = 'tell' #讲述
-    SUMMARIZE = 'summa' # 结束三段论
-    FINAL = 'final' # 讲述结局
+    ATTEND = 'attend'  # 加入游戏
+    CANCEL = 'cancel'  # 取消加入
+    QUIT = 'quit'  # 游戏中退出
+    BREAK = 'break'  # 中断
+    TELL = 'tell'  # 讲述
+    SUMMARIZE = 'summa'  # 结束三段论
+    FINAL = 'final'  # 讲述结局
+
 
 def get_online_message(user, datetime):
     return {
         'text': SystemMessageText.ONLINE,
-        'datetime': datetime.strftime("%Y-%m-%d %H:%M%z"),
+        'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
         'sender': {
             'uid': user.id,
             'nickname': user.last_name
         },
         'type': MessageType.SYSTEM,
-        'users': get_users()
+        'users': get_users(),
+        'players': get_players(),
+        'owner': get_owner()
+    }
+
+def get_attend_message(user,datetime):
+    return {
+        'text': GameMessageCommand.ATTEND,
+        'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
+        'sender': {
+            'uid': user.id,
+            'nickname': user.last_name
+        },
+        'type': MessageType.GAME,
+        'users': get_users(),
+        'players': get_players(),
+        'owner': get_owner()
     }
 
 
 def get_offline_message(user, datetime):
     return {
         'text': SystemMessageText.OFFLINE,
-        'datetime': datetime.strftime("%Y-%m-%d %H:%M%z"),
+        'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
         'sender': {
             'uid': user.id,
             'nickname': user.last_name
         },
         'type': MessageType.SYSTEM,
-        'users': get_users()
+        'users': get_users(),
+        'players': get_players(),
+        'owner': get_owner()
     }
+
 
 def get_user_list_message():
     return {
-            'text': SystemMessageText.INIT,
-            'datetime': timezone.now().strftime("%Y-%m-%d %H:%M%z"),
-            'type': MessageType.SYSTEM,
-            'users': get_users()
-        }
+        'text': SystemMessageText.USER_LIST,
+        'datetime': timezone.now().strftime("%Y-%m-%d %H:%M:%S%z"),
+        'type': MessageType.SYSTEM,
+        'users': get_users(),
+        'players': get_players(),
+        'owner': get_owner()
+    }
+
+
+def get_player_list_message():
+    return {
+        'text': SystemMessageText.USER_LIST,
+        'datetime': timezone.now().strftime("%Y-%m-%d %H:%M:%S%z"),
+        'type': MessageType.SYSTEM,
+        'users': get_users(),
+        'players': get_players(),
+        'owner': get_owner()
+    }
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -78,6 +112,14 @@ class ChatConsumer(WebsocketConsumer):
             {
                 'type': 'chat_message',
                 'message': get_user_list_message()
+            }
+        )
+        # 自动发一下playerlist
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'message': get_player_list_message()
             }
         )
 
@@ -143,6 +185,23 @@ class ChatConsumer(WebsocketConsumer):
                             'message': get_offline_message(sender, message.datetime)
                         }
                     )
+            elif message_type == 'game':
+                if message_text == GameMessageCommand.ATTEND:
+                    add_player(sender.id)
+                    message = Message(
+                        text=message_text,
+                        datetime=timezone.now(),
+                        sender=sender,
+                        message_type=Message.MessageTypes.GAME
+                    )
+                    message.save()
+                    async_to_sync(self.channel_layer.group_send)(
+                        self.room_group_name,
+                        {
+                            'type': 'chat_message',
+                            'message': get_attend_message(sender, message.datetime)
+                        }
+                    )
             else:
                 message = Message(
                     text=message_text,
@@ -153,7 +212,7 @@ class ChatConsumer(WebsocketConsumer):
                 message.save()
                 send_message = {
                     'text': message_text,
-                    'datetime': message.datetime.strftime("%Y-%m-%d %H:%M%z"),
+                    'datetime': message.datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
                     'sender': {
                         'uid': sender.id,
                         'nickname': sender.last_name

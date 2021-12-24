@@ -1,12 +1,14 @@
-from django.http import JsonResponse
 from .models import Cache
 from account.views import get_user_by_id
+
 
 class CacheKeys:
     HALL_USER_LIST = 'hall_user_list'
     HALL_PLAYER_LIST = 'hall_player_list'
+    PLAYER_OWNER = 'player_owner'
 
 
+# 确认登陆到了页面上socket连接的人，逻辑在consumers端
 def get_users():
     result = Cache.get(CacheKeys.HALL_USER_LIST)
     return result if result else []
@@ -45,70 +47,77 @@ def remove_user(uid):
     else:
         return None
 
+# 准备了参加游戏的用户
 
-def get_players(request):
+
+def get_players():
     result = Cache.get(CacheKeys.HALL_PLAYER_LIST)
-    return JsonResponse({
-        'result': True,
-        'users': result if result else []
-    })
+    return result if result else []
 
 
-def add_player(request):
-    if request.user.is_authenticated:
+def add_player(uid):
+    add_user = get_user_by_id(uid)
+    if add_user.is_authenticated:
         result = Cache.get(CacheKeys.HALL_PLAYER_LIST)
         flag = False
-        for user in result:
-            if user['uid'] == request.user.id:
-                flag = True
+        if result:
+            for user in result:
+                if user['uid'] == add_user.id:
+                    flag = True
         if flag:
-            return JsonResponse({
-                'result': True,
-                'users': result
-            })
+            return result
         if result:
             result.append(
                 {
-                    'username': request.user.username,
-                    'uid': request.user.id,
-                    'nickname': request.user.last_name,
+                    'username': add_user.username,
+                    'uid': add_user.id,
+                    'nickname': add_user.last_name,
                 })
         else:
             result = [{
-                'username': request.user.username,
-                'uid': request.user.id,
-                'nickname': request.user.last_name,
-                'admin': True
+                'username': add_user.username,
+                'uid': add_user.id,
+                'nickname': add_user.last_name,
             }]
+            set_owner(add_user.id)
         Cache.set(CacheKeys.HALL_PLAYER_LIST, result)
-        return JsonResponse({
-            'result': True,
-            'users': result
-        })
-
-
-def remove_player(request):
-    uid = None
-    if request.user.is_authenticated:
-        uid = request.user.id
+        return result
     else:
-        uid = request.POST.get('uid', '')
+        return None
+
+
+def remove_player(uid):
     if uid:
-        isAdmin = False
-        for user in result:
-            if user['uid'] == request.user.id:
-                if user.admin:
-                    isAdmin = True
-
-
+        owner = get_owner()
+        if owner.uid == uid:
+            remove_owner()
         result = Cache.get(CacheKeys.HALL_PLAYER_LIST)
         result = [user for user in result if str(user['uid']) != str(uid)]
         Cache.set(CacheKeys.HALL_PLAYER_LIST, result)
-        return JsonResponse({
-            'result': True,
-            'users': result
-        })
+        if len(result) > 0:
+            set_owner(result[0].uid)
+        return result
     else:
-        return JsonResponse({
-            'result': False
-        })
+        return None
+
+# 房主就是加入游戏的第一个人，没了就顺位，自动配置
+
+
+def get_owner():
+    result = Cache.get(CacheKeys.PLAYER_OWNER)
+    return result if result else []
+
+
+def remove_owner():
+    Cache.set(CacheKeys.PLAYER_OWNER, None)
+
+
+def set_owner(uid):
+    owner = get_user_by_id(uid)
+    Cache.set(CacheKeys.PLAYER_OWNER,
+              {
+              'username': owner.username,
+               'uid': owner.id,
+               'nickname': owner.last_name}
+              )
+    return get_owner()

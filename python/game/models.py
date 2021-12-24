@@ -30,10 +30,68 @@ class Cache(models.Model):
         cache.save()
 
 
+class ElementCard(models.Model):
+    word = models.CharField(
+        primary_key=True,
+        max_length=128,
+        verbose_name="词",
+        blank=False
+    )
+
+    enable = models.BooleanField(
+        verbose_name="可用",
+        blank=False,
+        default=True
+    )
+
+    usage_count = models.IntegerField(
+        verbose_name="抽取次数",
+        blank=False,
+        null=False,
+        default=0
+    )
+
+    break_count = models.IntegerField(
+        verbose_name="中断次数",
+        blank=False,
+        null=False,
+        default=0
+    )
+
+    break_succeed_count = models.IntegerField(
+        verbose_name="中断成功次数",
+        blank=False,
+        null=False,
+        default=0
+    )
+
+
+class EndingCard(models.Model):
+    text = models.TextField(
+        primary_key=True,
+        max_length=1024,
+        verbose_name="结局",
+        blank=False
+    )
+
+    enable = models.BooleanField(
+        verbose_name="可用",
+        blank=False,
+        default=True
+    )
+
+    usage_count = models.IntegerField(
+        verbose_name="抽取次数",
+        blank=False,
+        null=False,
+        default=0
+    )
+
 class Message(models.Model):
     class MessageTypes(models.TextChoices):
-        SYSTEM = 'SYS'
-        CHAT = 'CHA'
+        SYSTEM = 'system'
+        CHAT = 'chat'
+        GAME = 'game'
 
     text = models.TextField(
         max_length=1024,
@@ -69,37 +127,30 @@ class Message(models.Model):
         null=True
     )
     message_type = models.CharField(
-        max_length=3,
+        max_length=20,
         choices=MessageTypes.choices,
         default=MessageTypes.CHAT
     )
 
-# class ElementCard(models.Model):
+    element_card = models.ForeignKey(
+        ElementCard,
+        on_delete=models.CASCADE,
+        verbose_name="要素卡",
+        related_name='element_card',
+        blank=False,
+        null=True
+    )
 
-#     word = models.CharField(
-#         primary_key=True,
-#         max_length=128,
-#         verbose_name="词",
-#         blank=False
-#     )
-#     usage_count = models.IntegerField(
-#         verbose_name="使用次数",
-#         null=False,
-#         blank=False,
-#         default=0
-#     )
-#     interrupt_success_count = models.IntegerField(
-#         verbose_name="中断成功次数",
-#         null=False,
-#         blank=False,
-#         default=0
-#     )
-#     tell_count = models.IntegerField(
-#         verbose_name="讲述次数",
-#         null=False,
-#         blank=False,
-#         default=0
-#     )
+    ending_card = models.ForeignKey(
+        EndingCard,
+        on_delete=models.CASCADE,
+        verbose_name="结局卡",
+        related_name='ending_card',
+        blank=False,
+        null=True
+    )
+
+
 
 # class EndingCard(models.Model):
 

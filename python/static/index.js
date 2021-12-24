@@ -21,8 +21,8 @@ function updateStatus() {
       $("#menu_update_display_name").text(data.nickname);
       $("#button_logout").show();
       $("#change_nickname").val(data.nickname);
-      ouat.hall.message.sendSystem(account.user.uid.get(),'online',null
-      )
+      ouat.hall.message.sendSystem(account.user.uid.get(), 'online', null);
+      $("#button_ready_play").show();
     }
   });
 }
@@ -60,7 +60,7 @@ $("#button_register").click(function() {
       $("#menu_update_display_name").text(data.nickname);
       $("#button_logout").show();
       $("#change_nickname").val(data.nickname);
-      ouat.hall.message.sendSystem(account.user.uid.get(),'online',null);
+      ouat.hall.message.sendSystem(account.user.uid.get(), 'online', null);
     } else {
       alert("注册失败！");
       $("#button_register").button('reset');
@@ -86,8 +86,7 @@ $("#button_login").click(function() {
         $("#menu_update_display_name").text(data.nickname);
         $("#button_logout").show();
         $("#change_nickname").val(data.nickname);
-        ouat.hall.message.sendSystem(account.user.uid.get(),'online',null
-        );
+        ouat.hall.message.sendSystem(account.user.uid.get(), 'online', null);
       } else {
         alert("登录失败！");
         $("#button_login").button('reset');
@@ -103,7 +102,7 @@ $("#menu_logout").click(function() {
       console.log(data)
       $("#button_logout").hide();
       $("#menu_online").show();
-      ouat.hall.message.sendSystem(data.uid,'offline',null);
+      ouat.hall.message.sendSystem(data.uid, 'offline', null);
     }
   });
 });
@@ -134,16 +133,21 @@ $("#chat").keydown(function(event) {
   }
 });
 
+$("#button_ready_play").click(function() {
+  ouat.game.players.add()
+});
 // ------------------------编辑分割线-----------------
 
 ouat.init(
   function(messagedata) {
     messagedata = JSON.parse(messagedata.data);
-    console.log(messagedata)
-    if (messagedata.type == "system" && messagedata.text == "user_list") {
+    if (messagedata.users) {
       updateUserList(messagedata.users);
     }
-    if (messagedata.text != "user_list") {
+    if (messagedata.players) {
+      updatePlayerList(messagedata.players);
+    }
+    if (messagedata.text != "user_list" ) {
       addMessage(messagedata, "#messages")
     }
   },
@@ -176,35 +180,51 @@ function updateUserList(users) {
   for (index in users) {
     user = users[index];
     var displayName = user.nickname;
-    //var date = users[uid].date;
     var li = $("<li></li>").addClass("list-group-item").text(displayName);
-    /*if (date + findghost.userSleepTime < currentDate) {
-        li.addClass('list-group-item-warning');
-    }*/
     $("#user_list").append(li);
     count += 1;
   }
   $("#online_count").text(count);
 }
 
+function updatePlayerList(users) {
+  $("#gamer_list").text("");
+  var count = 0;
+  for (index in users) {
+    user = users[index];
+    var displayName = user.nickname;
+    var li = $("<li></li>").addClass("list-group-item").text(displayName);
+    $("#gamer_list").append(li);
+    count += 1;
+  }
+  $("#online_count").text(count);
+}
+
 function addMessage(messageInfo, elementId) {
-  var date = messageInfo.datetime;
-  var message = messageInfo.text;
-  var dateTime = new Date(parseInt(date));
-  var userDisplay = null;
   console.log(messageInfo)
+  var date = new Date(messageInfo.datetime);
+  var message = messageInfo.text;
+  var dateTime = new Date(date);
+  var userDisplay = null;
   if (messageInfo.sender) {
     userDisplay = messageInfo.sender.nickname
   }
   var color = messageInfo.color;
   var messageType = messageInfo.type;
   var commandText = ''
-  if (messageType == "system") {
-    updateUserList(messageInfo.users);
+  if (messageType == "system" || messageType == 'game') {
+    if (messageInfo.users) {
+      updateUserList(messageInfo.users);
+    }
+    if (messageInfo.players) {
+      updatePlayerList(messageInfo.players);
+    }
     if (message == "online") {
       commandText = userDisplay + "来了。"
     } else if (message == "offline") {
       commandText = userDisplay + "离开了。"
+    } else if (message == "attend") {
+      commandText = userDisplay + "举手要玩游戏。"
     }
     $(elementId).append(
       $("<div></div>").addClass("text-danger").append(

@@ -31,14 +31,35 @@ var ouat = {
                     callback();
                 }
             },
-            sendGame: function() {
-
+            sendGame: function(from, to, text, detail, elementCard, EndingCard, callback) {
+                ouat.hall.message._messageSocket.send(JSON.stringify({
+                    'sender': from,
+                    'receiver': to,
+                    'text': text,
+                    'detail': detail,
+                    'elementCard': elementCard,
+                    'EndingCard':EndingCard,
+                    'type':'game'
+                }));
+                if (callback) {
+                    callback();
+                }
             }
         }
     },
     game: {
         players: {
-            add:function(){},
+            add:function(callback){
+                ouat.hall.message.sendGame(
+                    account.user.uid.get(), 
+                    null, 
+                    'attend', 
+                    null, 
+                    null, 
+                    null, 
+                    callback
+                );
+            },
             remove:function(){},
             get:function(){}
         },
