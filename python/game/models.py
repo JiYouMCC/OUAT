@@ -87,11 +87,25 @@ class EndingCard(models.Model):
         default=0
     )
 
+
 class Message(models.Model):
     class MessageTypes(models.TextChoices):
         SYSTEM = 'system'
         CHAT = 'chat'
         GAME = 'game'
+
+    class SystemMessageCommand:
+        ONLINE = 'online'
+        OFFLINE = 'offline'
+
+    class GameMessageCommand:
+        ATTEND = 'attend'
+        CANCEL = 'cancel'
+        QUIT = 'quit'
+        BREAK = 'break'
+        TELL = 'tell'
+        SUMMARY = 'summary'
+        ENDING = 'ending'
 
     text = models.TextField(
         max_length=1024,
@@ -99,6 +113,14 @@ class Message(models.Model):
         blank=True,
         null=False
     )
+
+    command = models.TextField(
+        max_length=1024,
+        verbose_name="命令",
+        blank=False,
+        null=True
+    )
+
     color = models.CharField(
         max_length=10,
         verbose_name="颜色",
@@ -150,78 +172,9 @@ class Message(models.Model):
         null=True
     )
 
-
-
-# class EndingCard(models.Model):
-
-#     text = models.TextField(
-#         primary_key=True,
-#         max_length=1024,
-#         verbose_name="结局",
-#         blank=False
-#     )
-#     usage_count = models.IntegerField(
-#         verbose_name="使用次数",
-#         null=False,
-#         blank=False,
-#         default=0
-#     )
-
 # class Game(models.Model):
 #     status
 #     players
 #     start time
 #     element cards
 #     final cards
-
-
-# class GameMessage(Message):
-#     game = models.ForeignKey(
-#         Game,
-#         on_delete=models.CASCADE,
-#         verbose_name="游戏",
-#         related_name='game',
-#         blank=False,
-#         null=False
-#     )
-
-# class TellMessage(GameMessage):
-#     class TellMessageType(models.TextChoices):
-#         STORY ='STORY', _('故事')
-#         FINAL ='FINAL', _('结局前')
-#         ENDING ='ENDING', _('结局')
-
-#     element = models.ForeignKey(
-#         ElementCard,
-#         on_delete=models.CASCADE,
-#         verbose_name="使用要素",
-#         related_name='element',
-#         blank=False,
-#         null=True
-#     )
-#     message_type = models.CharField(
-#         choices=TellMessageType.choices,
-#         default=TellMessageType.STORY,
-#         blank=False,
-#         null=True
-#     )
-
-# class InterruptMessage(GameMessage):
-#     interrupt_to = models.ForeignKey(
-#         ElementCard,
-#         on_delete=models.CASCADE,
-#         verbose_name="中断对象",
-#         related_name='tell_story',
-#         blank=False,
-#         null=False
-#     )
-
-# class FailMessage(GameMessage):
-#     fail_to = models.ForeignKey(
-#         ElementCard,
-#         on_delete=models.CASCADE,
-#         verbose_name="不通顺对象",
-#         related_name='tell_story',
-#         blank=False,
-#         null=False
-#     )

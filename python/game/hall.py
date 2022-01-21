@@ -48,8 +48,6 @@ def remove_user(uid):
         return None
 
 # 准备了参加游戏的用户
-
-
 def get_players():
     result = Cache.get(CacheKeys.HALL_PLAYER_LIST)
     return result if result else []
@@ -101,8 +99,6 @@ def remove_player(uid):
         return None
 
 # 房主就是加入游戏的第一个人，没了就顺位，自动配置
-
-
 def get_owner():
     result = Cache.get(CacheKeys.PLAYER_OWNER)
     return result if result else []
@@ -121,3 +117,51 @@ def set_owner(uid):
                'nickname': owner.last_name}
               )
     return get_owner()
+
+
+# 游戏状态
+class GameStatus:
+    NOT_START = 'not start'
+    PREPARING = 'preparing' # 有人报名未开始
+    START = 'start' # 进行中
+
+def get_game_status():
+    pass
+
+def set_game_status():
+    pass
+
+# 游戏阶段
+class GameStage:
+    TELL = 'tell' # 讲述中
+    BREAK = 'break' # 中断中
+    OBJECTION = 'objection'# 异议中
+    SUMMARY = 'summary'# 总结中
+    ENDING = 'ending' # 结局中
+
+def get_game_stage():
+    pass
+
+def set_game_stage():
+    pass
+
+
+# 操作
+
+def ouat_tell():
+    pass
+
+def ouat_break():
+    pass
+
+def ouat_objection():
+    pass
+
+def ouat_vote():
+    pass
+
+def ouat_summary():
+    pass
+
+def ouat_ending():
+    pass

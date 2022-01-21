@@ -8,92 +8,115 @@ from .hall import add_user, remove_user, get_users, get_players, get_owner, add_
 import logging
 
 
-class SystemMessageText:
-    USER_LIST = 'user_list'  # 隐藏
-    ONLINE = 'online'  # 用户活跃
-    OFFLINE = 'offline'  # 用户不活跃
+# 回传消息
 
+# 聊天类
+def get_chat_message(sender, receiver, datatime, text, color):
+    return {
+        'text': text,
+        'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
+        'sender': {
+            'uid': sender.id,
+            'nickname': sender.last_name
+        },
+        'receiver': {
+            'uid': receiver.id,
+            'nickname':receiver.last_name
+        } if receiver else None,
+        'color': color,
+        'type': Message.MessageTypes.CHAT
+    }
 
-class MessageType:
-    SYSTEM = 'system'  # 系统消息
-    CHAT = 'chat'  # 聊天消息
-    GAME = 'game'  # 游戏消息
-
-
-class GameMessageCommand:
-    ATTEND = 'attend'  # 加入游戏
-    CANCEL = 'cancel'  # 取消加入
-    QUIT = 'quit'  # 游戏中退出
-    BREAK = 'break'  # 中断
-    TELL = 'tell'  # 讲述
-    SUMMARIZE = 'summa'  # 结束三段论
-    FINAL = 'final'  # 讲述结局
-
-
+# 系统类
+## user_list
 def get_online_message(user, datetime):
     return {
-        'text': SystemMessageText.ONLINE,
+        'command': Message.SystemMessageCommand.ONLINE,
         'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
         'sender': {
             'uid': user.id,
             'nickname': user.last_name
         },
-        'type': MessageType.SYSTEM,
-        'users': get_users(),
-        'players': get_players(),
-        'owner': get_owner()
+        'type': Message.MessageTypes.SYSTEM,
+        'users': get_users()
     }
-
-def get_attend_message(user,datetime):
-    return {
-        'text': GameMessageCommand.ATTEND,
-        'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
-        'sender': {
-            'uid': user.id,
-            'nickname': user.last_name
-        },
-        'type': MessageType.GAME,
-        'users': get_users(),
-        'players': get_players(),
-        'owner': get_owner()
-    }
-
 
 def get_offline_message(user, datetime):
     return {
-        'text': SystemMessageText.OFFLINE,
+        'command': Message.SystemMessageCommand.OFFLINE,
         'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
         'sender': {
             'uid': user.id,
             'nickname': user.last_name
         },
-        'type': MessageType.SYSTEM,
+        'type': Message.MessageTypes.SYSTEM,
         'users': get_users(),
-        'players': get_players(),
-        'owner': get_owner()
     }
-
 
 def get_user_list_message():
     return {
-        'text': SystemMessageText.USER_LIST,
+        'command': 'user_list',
         'datetime': timezone.now().strftime("%Y-%m-%d %H:%M:%S%z"),
-        'type': MessageType.SYSTEM,
-        'users': get_users(),
+        'type': Message.MessageTypes.SYSTEM,
+        'users': get_users()
+    }
+
+# 游戏类
+## player_list
+def get_attend_message(user, datetime):
+    return {
+        'command': GameMessageCommand.ATTEND,
+        'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
+        'sender': {
+            'uid': user.id,
+            'nickname': user.last_name
+        },
+        'type': Message.MessageTypes.GAME,
         'players': get_players(),
         'owner': get_owner()
     }
 
+def get_cancel_message(user,datetime):
+    return {
+        'command': GameMessageCommand.CANCEL,
+        'datetime': datetime.strftime("%Y-%m-%d %H:%M:%S%z"),
+        'sender': {
+            'uid': user.id,
+            'nickname': user.last_name
+        },
+        'type': Message.MessageTypes.GAME,
+        'players': get_players(),
+        'owner': get_owner()
+    }
 
 def get_player_list_message():
     return {
-        'text': SystemMessageText.USER_LIST,
+        'text': 'player_list',
         'datetime': timezone.now().strftime("%Y-%m-%d %H:%M:%S%z"),
-        'type': MessageType.SYSTEM,
-        'users': get_users(),
+        'type': Message.MessageTypes.GAME,
         'players': get_players(),
         'owner': get_owner()
     }
+
+def get_start_message(user, datetime):
+    pass
+
+def get_quit_message(user, datetime):
+    pass
+
+def get_tell_message():
+    pass
+
+def get_sum_message():
+    pass
+
+def get_ending_message():
+    pass
+
+def get_game_stage_message():
+    pass
+
+
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -151,7 +174,7 @@ class ChatConsumer(WebsocketConsumer):
         message_type = text_data_json['type'] if 'type' in text_data_json else None
         if sender:
             if message_type == 'system':
-                if message_text == SystemMessageText.ONLINE:
+                if message_text == Message.SystemMessageText.ONLINE:
                     add_user(sender.id)
                     self.user = sender
                     message = Message(
@@ -168,7 +191,7 @@ class ChatConsumer(WebsocketConsumer):
                             'message': get_online_message(sender, message.datetime)
                         }
                     )
-                if message_text == SystemMessageText.OFFLINE:
+                if message_text == Message.SystemMessageText.OFFLINE:
                     remove_user(sender.id)
                     self.user = None
                     message = Message(
@@ -218,7 +241,7 @@ class ChatConsumer(WebsocketConsumer):
                         'nickname': sender.last_name
                     },
                     'color': message_color,
-                    'type': MessageType.CHAT
+                    'type': Message.MessageTypes.CHAT
                 }
                 async_to_sync(self.channel_layer.group_send)(
                     self.room_group_name,
